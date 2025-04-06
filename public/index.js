@@ -1,38 +1,63 @@
-const input = document.getElementById("input");
-const button = document.getElementById("sendButton");
-const chat = document.getElementById("chat");
-
-const template = "<li class=\"list-group-item\">%MESSAGE</li>";
-const messages = [];
-
 const socket = io();
 
-input.onkeydown = (event) => {
-  if (event.keyCode === 13) {
-    event.preventDefault();
-    button.click();
-  }
-};
+// Mostra la modale per inserire il nome quando l'utente entra nella chat
+window.onload = () => {
+    const modal = document.getElementById('nameModal');
+    const submitNameButton = document.getElementById('submitName');
+    const chatContainer = document.getElementById('chatContainer');
+    const chatInput = document.getElementById('chatInput');
+    const sendMessageButton = document.getElementById('sendMessage');
+    const messagesList = document.getElementById('messagesList');
 
-button.onclick = () => {
-  if (input.value.trim() !== "") {
-    socket.emit("message", input.value);
-    input.value = "";
-  }
-};
+    // Quando l'utente invia il nome
+    submitNameButton.addEventListener('click', () => {
+        const username = document.getElementById('username').value;
+        if (username.trim()) {
+            // Invia il nome al server
+            socket.emit('setName', username);
 
-socket.on("chat", (message) => {
-  console.log(message);
-  messages.push(message);
-  render();
-});
+            // Nascondi la modale e mostra la chat
+            modal.style.display = 'none';
+            chatContainer.style.display = 'block';
+        }
+    });
 
-const render = () => {
-  let html = "";
-  messages.forEach((message) => {
-    const row = template.replace("%MESSAGE", message);
-    html += row;
-  });
-  chat.innerHTML = html;
-  window.scrollTo(0, document.body.scrollHeight);
+    // Mostra la lista degli utenti
+    socket.on('list', (userList) => {
+        const userListElement = document.getElementById('userList');
+        userListElement.innerHTML = ''; // Pulisci la lista esistente
+
+        // Aggiungi gli utenti alla lista
+        userList.forEach(user => {
+            const li = document.createElement('li');
+            li.textContent = user.name; // Mostra solo il nome, non il socketId
+            userListElement.appendChild(li);
+        });
+    });
+
+    // Gestione del messaggio in arrivo
+    socket.on('chatMessage', (data) => {
+        const li = document.createElement('li');
+        li.textContent = `${data.name}: ${data.message}`; // Mostra il nome dell'utente e il messaggio
+        messagesList.appendChild(li);
+    });
+
+    // Invia il messaggio
+    sendMessageButton.addEventListener('click', () => {
+        const message = chatInput.value.trim();
+        if (message) {
+            // Invia il messaggio al server
+            socket.emit('chatMessage', message);
+
+            // Pulisce il campo di input
+            chatInput.value = '';
+        }
+    });
+
+    // Invia il messaggio anche con "Enter"
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessageButton.click();
+        }
+    });
 };

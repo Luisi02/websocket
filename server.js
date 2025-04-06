@@ -1,34 +1,48 @@
-const fs = require('fs');
-const express = require("express");
-const http = require("http");
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+
 const app = express();
-const path = require("path");
-const bodyParser = require("body-parser");
-const { Server } = require('socket.io');
-
-const conf = JSON.parse(fs.readFileSync("./conf.json"));
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server);
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use("/", express.static(path.join(__dirname, "public")));
+let userList = []; // Lista degli utenti
+
+app.use(express.static('public')); // Per servire i file statici (HTML, CSS, JS)
 
 io.on('connection', (socket) => {
-  console.log("socket connected: " + socket.id);
-  io.emit("chat", "new client: " + socket.id);
+  console.log('Un nuovo utente si è connesso');
 
-  socket.on('message', (message) => {
-    const response = socket.id + ': ' + message;
-    console.log(response);
-    io.emit("chat", response);
+  // Quando un utente invia il proprio nome
+  socket.on('setName', (name) => {
+    // Aggiungiamo l'utente alla lista
+    userList.push({ socketId: socket.id, name: name });
+
+    // Emitto la lista aggiornata a tutti gli utenti
+    io.emit('list', userList);
   });
 
+  // Quando un utente invia un messaggio
+  socket.on('chatMessage', (message) => {
+    const user = userList.find(user => user.socketId === socket.id);
+    if (user) {
+      // Emitto il messaggio a tutti gli utenti con il nome dell'utente
+      io.emit('chatMessage', { name: user.name, message: message });
+    }
+  });
+
+  // Quando un utente si disconnette
   socket.on('disconnect', () => {
-    console.log("socket disconnected: " + socket.id);
+    console.log('Un utente si è disconnesso');
+    
+    // Rimuovo l'utente dalla lista
+    userList = userList.filter(user => user.socketId !== socket.id);
+    
+    // Emitto la lista aggiornata a tutti gli utenti
+    io.emit('list', userList);
   });
 });
 
-server.listen(conf.port, () => {
-  console.log("server running on port: " + conf.port);
+server.listen(3000, () => {
+  console.log('Server in ascolto su http://localhost:3000');
 });

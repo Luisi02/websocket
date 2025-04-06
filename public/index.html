@@ -1,19 +1,33 @@
-<!doctype html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-  </head>
-  <body>
-    <div class="container">
-      <ul id="chat" class="list-group"></ul>
-      <div class="row mt-4">
-        <input id="input" class="form-control" />
-        <button id="sendButton" type="button" class="btn btn-success mt-2">Send</button>
-      </div>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Modale per inserire il nome -->
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h2>Inserisci il tuo nome</h2>
+            <input type="text" id="username" placeholder="Nome utente" required>
+            <button id="submitName">Entra</button>
+        </div>
     </div>
+
+    <!-- Sezione chat -->
+    <div id="chatContainer" style="display:none;">
+        <ul id="messagesList"></ul>
+
+        <input type="text" id="chatInput" placeholder="Scrivi un messaggio...">
+        <button id="sendMessage">Invia</button>
+    </div>
+
+    <!-- Lista degli utenti -->
+    <ul id="userList"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script src="index.js"></script>
-  </body>
+</body>
 </html>
